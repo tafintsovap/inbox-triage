@@ -31,7 +31,7 @@ DECISION HEURISTICS (in order of priority):
 1. Did the sender include something that proves they know the recipient specifically (their company, their role, a project they did, something they wrote)? → REPLY or URGENT, never SPAM.
 2. Could this exact email body have been sent to 10,000 other people unchanged? → SPAM.
 3. Is the action somewhere other than email (LinkedIn, GitHub, etc.)? → FYI even if a real human sent it.
-4. When uncertain between REPLY and SPAM, default to REPLY (false positives in SPAM are more costly to the user than extra REPLY items).
+4. When uncertain between REPLY and SPAM, default to REPLY. SPAM should be reserved for content that is unambiguously promotional (newsletters, sales pitches selling a product, automated marketing). When in doubt about a recruiter or business outreach email, even if it uses generic templated language, classify as REPLY — the user can dismiss it in one click but cannot recover from missing it in spam.
 5. When uncertain between URGENT and REPLY, default to REPLY (only escalate when time pressure is explicit).
 
 Return ONLY a valid JSON array. No prose, no markdown fences. Each object: { id, category, reasoning } where reasoning is under 15 words and explains WHY that category.`
