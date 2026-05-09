@@ -40,13 +40,19 @@ export async function classifyEmails(
     }))
   )
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-7',
-    max_tokens: 2000,
-    temperature: 0.3,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: userMessage }],
-  })
+  let response
+  try {
+    response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2000,
+      temperature: 0.3,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userMessage }],
+    })
+  } catch (err) {
+    console.error('[classifier] Anthropic API error:', err)
+    throw err
+  }
 
   const textBlock = response.content.find((b) => b.type === 'text')
   const raw = textBlock?.type === 'text' ? textBlock.text : ''
@@ -54,8 +60,8 @@ export async function classifyEmails(
   try {
     const parsed = JSON.parse(raw) as Classification[]
     return parsed
-  } catch {
-    console.error('Failed to parse classifier response:', raw)
+  } catch (err) {
+    console.error('[classifier] Failed to parse response:', err, '\nRaw output:', raw)
     return []
   }
 }

@@ -1,5 +1,6 @@
 import { classifyEmails, type EmailInput } from '@/lib/classifier'
 import { createClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -24,7 +25,13 @@ export async function POST(request: Request) {
     const classifications = await classifyEmails(emails)
     return Response.json({ classifications })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    return Response.json({ error: message }, { status: 500 })
+    console.error('[classify] Error:', err)
+    return NextResponse.json(
+      {
+        error: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined,
+      },
+      { status: 500 }
+    )
   }
 }
