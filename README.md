@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Inbox Triage
 
-## Getting Started
+AI-powered Gmail triage agent. Classifies your unread emails into Urgent / Reply / FYI / Spam using Claude, drafts responses when needed, and routes to the right app for notifications like LinkedIn where the reply doesn't happen via email.
 
-First, run the development server:
+🎥 [90-second demo](https://www.loom.com/share/4a6a777ae6eb4faf843ad9b6d0eae363)
+🔗 [Live site](https://inbox-triage.polinatafintsova.com)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## What it does
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Sign in with Google (OAuth, gmail.readonly + gmail.send scopes)
+- Fetches last 50 unread emails via Gmail API
+- Classifies each into URGENT / REPLY / FYI / SPAM with Claude, including reasoning
+- For real-email replies: drafts a response with Claude, user edits, sends via Gmail API
+- For app notifications (LinkedIn, GitHub, etc.): routes to the actual app
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Frontend:** Next.js 16 (App Router, TypeScript, Tailwind, Turbopack)
+- **Auth + DB:** Supabase (Postgres + Row Level Security)
+- **AI:** Anthropic Claude API (`claude-sonnet-4-6`)
+- **Email:** Gmail API via `googleapis` SDK
+- **Hosting:** Vercel
+- **OAuth:** Google Cloud Console + Supabase Google Provider
 
-## Learn More
+## Architecture
 
-To learn more about Next.js, take a look at the following resources:
+User signs in via Google OAuth → Supabase manages session.
+Tokens (access + refresh) stored in Postgres with Row Level Security.
+Dashboard fetches /api/fetch-emails → Gmail API → returns 50 unread emails.
+Dashboard fetches /api/classify → Claude batched classification → returns categories with reasoning.
+On reply: /api/draft-reply (Claude) → user edits → /api/send-email (Gmail API, threaded reply).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Why I built it
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Built in 2 days as a portfolio piece. Tools like Superhuman charge $30/month for something similar — this is an experiment in how fast you can ship a real workflow agent with the right scaffolding.
 
-## Deploy on Vercel
+## v2 roadmap
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- [ ] Voice training (read sent folder, mimic user's writing style)
+- [ ] Multi-account support
+- [ ] Snooze + scheduling
+- [ ] Custom rules ("always treat from X as urgent")
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Access
+
+The app is in Google's pre-verification testing mode — Gmail scopes require Google verification (4-6 weeks process) before anyone can sign in. For now, DM me your Gmail and I'll add you as a test user if you want to try it.
+
+## Local development
+
+Requires `.env.local` with: Anthropic API key, Supabase URL + keys, Google OAuth client ID + secret. Not committed.
+
+Install dependencies with `npm install` and run with `npm run dev`.
+
+## Notes
+
+This is a portfolio project, not a product. Built by [Polina Tafintsova](https://www.linkedin.com/in/polinatafintsova/) over a weekend in May 2026.
