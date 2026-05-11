@@ -33,12 +33,12 @@ const CATEGORIES = ['URGENT', 'REPLY', 'FYI', 'SPAM'] as const
 
 const CATEGORY_STYLES: Record<
   Classification['category'],
-  { headerBg: string; countBg: string; countText: string }
+  { headerBg: string; countBg: string; countText: string; labelColor: string; dotColor: string }
 > = {
-  URGENT: { headerBg: 'bg-red-50',     countBg: 'bg-red-100',     countText: 'text-red-600'     },
-  REPLY:  { headerBg: 'bg-blue-50',    countBg: 'bg-blue-100',    countText: 'text-blue-600'    },
-  FYI:    { headerBg: 'bg-gray-50',    countBg: 'bg-gray-100',    countText: 'text-gray-500'    },
-  SPAM:   { headerBg: 'bg-neutral-100',countBg: 'bg-neutral-200', countText: 'text-neutral-500' },
+  URGENT: { headerBg: 'bg-red-500/[0.08]',    countBg: 'bg-red-500/[0.15]',   countText: 'text-red-400',   labelColor: 'text-red-400',   dotColor: 'bg-red-500'   },
+  REPLY:  { headerBg: 'bg-blue-500/[0.08]',   countBg: 'bg-blue-500/[0.15]',  countText: 'text-blue-400',  labelColor: 'text-blue-400',  dotColor: 'bg-blue-500'  },
+  FYI:    { headerBg: 'bg-white/[0.03]',       countBg: 'bg-white/[0.1]',      countText: 'text-zinc-500',  labelColor: 'text-zinc-400',  dotColor: 'bg-zinc-500'  },
+  SPAM:   { headerBg: 'bg-white/[0.015]',      countBg: 'bg-white/[0.08]',     countText: 'text-zinc-600',  labelColor: 'text-zinc-600',  dotColor: 'bg-zinc-700'  },
 }
 
 function senderName(raw: string): string {
@@ -139,19 +139,19 @@ export default function DashboardPage() {
      * can shrink below its content height and be bounded by the viewport.
      * Without min-h-0 the grid expands to content, making columns not scroll.
      */
-    <div className="flex h-screen flex-col overflow-hidden bg-white">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#090909] text-white">
 
       {/* ── Header ── */}
-      <header className="flex shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-4 py-2 sm:px-6">
+      <header className="flex shrink-0 items-center justify-between border-b border-white/[0.08] bg-[#0e0e0e] px-4 py-2 sm:px-6">
         <div className="flex items-baseline gap-3">
-          <h1 className="text-base font-semibold text-zinc-900">Inbox Triage</h1>
+          <h1 className="text-sm font-semibold tracking-tight text-white">Inbox Triage</h1>
           {userEmail && (
-            <span className="hidden text-xs text-zinc-400 sm:inline">{userEmail}</span>
+            <span className="hidden text-xs text-zinc-600 sm:inline">{userEmail}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
           {loading && (
-            <span className="flex items-center gap-1.5 text-xs text-zinc-400">
+            <span className="flex items-center gap-1.5 text-xs text-zinc-500">
               <Spinner />
               {loadStatus === 'fetching' ? 'Loading inbox…' : 'Classifying…'}
             </span>
@@ -159,13 +159,13 @@ export default function DashboardPage() {
           <button
             onClick={loadInbox}
             disabled={loading}
-            className="rounded border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded border border-white/10 px-2.5 py-1 text-xs font-medium text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Refresh
           </button>
           <button
             onClick={signOut}
-            className="rounded border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50"
+            className="rounded border border-white/10 px-2.5 py-1 text-xs font-medium text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-300"
           >
             Sign out
           </button>
@@ -174,11 +174,11 @@ export default function DashboardPage() {
 
       {/* ── Error banner ── */}
       {loadStatus === 'error' && loadError && (
-        <div className="flex shrink-0 items-center justify-between border-b border-red-200 bg-red-50 px-4 py-2">
-          <p className="text-xs font-medium text-red-700">{loadError}</p>
+        <div className="flex shrink-0 items-center justify-between border-b border-red-500/20 bg-red-500/10 px-4 py-2">
+          <p className="text-xs font-medium text-red-400">{loadError}</p>
           <button
             onClick={loadInbox}
-            className="rounded border border-red-300 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-100"
+            className="rounded border border-red-500/30 px-2.5 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/15"
           >
             Retry
           </button>
@@ -191,7 +191,7 @@ export default function DashboardPage() {
           divide-x: 1px column separators
           overflow-hidden: clip within bounded area
       ── */}
-      <div className="grid flex-1 min-h-0 grid-cols-1 divide-x divide-zinc-100 overflow-hidden sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid flex-1 min-h-0 grid-cols-1 divide-x divide-white/5 overflow-hidden sm:grid-cols-2 lg:grid-cols-4">
         {CATEGORIES.map((cat) => {
           const group = byCategory(cat)
           const style = CATEGORY_STYLES[cat]
@@ -204,11 +204,12 @@ export default function DashboardPage() {
             <div key={cat} className="flex min-h-0 flex-col overflow-hidden">
 
               {/* Sticky column header */}
-              <div className={`${style.headerBg} flex shrink-0 items-center gap-2 border-b border-zinc-200 px-3 py-2`}>
-                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600">
+              <div className={`${style.headerBg} flex shrink-0 items-center gap-2 border-b border-white/5 px-3 py-2`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${style.dotColor}`} />
+                <span className={`text-[10px] font-semibold tracking-widest ${style.labelColor}`}>
                   {cat}
                 </span>
-                <span className={`${style.countBg} ${style.countText} rounded-full px-1.5 py-0.5 text-xs font-medium`}>
+                <span className={`ml-auto ${style.countBg} ${style.countText} rounded-full px-1.5 py-0.5 text-[10px]`}>
                   {group.length}
                 </span>
               </div>
@@ -216,7 +217,7 @@ export default function DashboardPage() {
               {/* Scrollable card list — flex-1 fills, overflow-y-auto scrolls */}
               <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
                 {group.length === 0 ? (
-                  <p className="px-1 pt-3 text-xs text-zinc-300">No emails</p>
+                  <p className="px-1 pt-3 text-xs text-zinc-700">No emails</p>
                 ) : (
                   group.map((email) => (
                     <EmailCard
@@ -250,12 +251,12 @@ function EmailCard({ email, onClick }: { email: TriagedEmail; onClick: () => voi
   return (
     <button
       onClick={onClick}
-      className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-left transition-all hover:border-zinc-300 hover:shadow-sm active:scale-[0.99]"
+      className="w-full rounded-md border border-white/5 bg-white/[0.035] px-2.5 py-2 text-left transition-all hover:border-white/10 hover:bg-white/[0.055] active:scale-[0.99]"
     >
-      <p className="truncate text-xs font-medium text-zinc-800">
+      <p className="truncate text-[11px] font-medium text-zinc-300">
         {senderName(email.sender)}
       </p>
-      <p className="truncate text-xs text-zinc-500">{email.subject}</p>
+      <p className="truncate text-[11px] text-zinc-600">{email.subject}</p>
     </button>
   )
 }
@@ -342,7 +343,7 @@ function DetailModal({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-20 bg-black/20 backdrop-blur-[1px]"
+        className="fixed inset-0 z-20 bg-black/50 backdrop-blur-[2px]"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -352,18 +353,18 @@ function DetailModal({
         role="dialog"
         aria-modal="true"
         aria-label="Email detail"
-        className="fixed inset-y-0 right-0 z-30 flex w-full max-w-lg flex-col border-l border-zinc-200 bg-white shadow-xl"
+        className="fixed inset-y-0 right-0 z-30 flex w-full max-w-lg flex-col border-l border-white/[0.08] bg-[#111111] shadow-2xl"
       >
         {/* Drawer header */}
-        <div className="flex shrink-0 items-start justify-between border-b border-zinc-100 px-5 py-4">
+        <div className="flex shrink-0 items-start justify-between border-b border-white/5 px-5 py-4">
           <div className="min-w-0 pr-4">
-            <p className="text-sm font-semibold leading-snug text-zinc-900">{email.subject}</p>
+            <p className="text-sm font-semibold leading-snug text-white">{email.subject}</p>
             <p className="mt-0.5 text-xs text-zinc-500">{email.sender}</p>
           </div>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="shrink-0 rounded-md p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+            className="shrink-0 rounded-md p-1 text-zinc-500 transition-colors hover:bg-white/[0.08] hover:text-zinc-300"
           >
             <XIcon />
           </button>
@@ -374,8 +375,8 @@ function DetailModal({
 
           {/* Snippet */}
           <div>
-            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-400">Preview</p>
-            <blockquote className="border-l-2 border-zinc-200 pl-3 text-sm leading-relaxed text-zinc-700">
+            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-600">Preview</p>
+            <blockquote className="border-l-2 border-white/10 pl-3 text-sm leading-relaxed text-zinc-400">
               {email.snippet}
             </blockquote>
           </div>
@@ -383,7 +384,7 @@ function DetailModal({
           {/* Reasoning */}
           {email.reasoning && (
             <div>
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-400">Why this category</p>
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-600">Why this category</p>
               <p className="text-xs italic text-zinc-500">{email.reasoning}</p>
             </div>
           )}
@@ -391,29 +392,29 @@ function DetailModal({
           {/* ── Case A: URGENT/REPLY + email channel ── */}
           {actionable && channel.type === 'email' && (
             <div className="space-y-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">Reply</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-600">Reply</p>
 
               {draftStatus === 'idle' && (
                 <button
                   onClick={handleDraft}
-                  className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-700"
+                  className="rounded-md bg-white px-3 py-1.5 text-xs font-medium text-zinc-900 transition-colors hover:bg-zinc-100"
                 >
                   Draft reply
                 </button>
               )}
 
               {draftStatus === 'drafting' && (
-                <span className="flex items-center gap-1.5 text-xs text-zinc-400">
+                <span className="flex items-center gap-1.5 text-xs text-zinc-500">
                   <Spinner /> Drafting…
                 </span>
               )}
 
               {draftStatus === 'error' && draftError && (
                 <div className="space-y-2">
-                  <p className="text-xs text-red-600">{draftError}</p>
+                  <p className="text-xs text-red-400">{draftError}</p>
                   <button
                     onClick={handleDraft}
-                    className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+                    className="rounded-md border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/10"
                   >
                     Retry draft
                   </button>
@@ -428,17 +429,17 @@ function DetailModal({
                     onChange={(e) => setDraft(e.target.value)}
                     disabled={draftStatus === 'sending' || draftStatus === 'sent'}
                     rows={6}
-                    className="w-full resize-none rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 focus:border-zinc-400 focus:outline-none disabled:opacity-60"
+                    className="w-full resize-none rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-200 focus:border-white/20 focus:outline-none disabled:opacity-60"
                   />
-                  {sendError && <p className="text-xs text-red-600">{sendError}</p>}
+                  {sendError && <p className="text-xs text-red-400">{sendError}</p>}
                   <div className="flex justify-end">
                     {draftStatus === 'sent' ? (
-                      <span className="text-xs font-medium text-green-600">✓ Sent</span>
+                      <span className="text-xs font-medium text-green-400">✓ Sent</span>
                     ) : (
                       <button
                         onClick={handleSend}
                         disabled={draftStatus === 'sending' || !draft.trim()}
-                        className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-xs font-medium text-zinc-900 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {draftStatus === 'sending' && <Spinner />}
                         {draftStatus === 'sending' ? 'Sending…' : 'Send'}
@@ -452,8 +453,8 @@ function DetailModal({
 
           {/* ── Case B: URGENT/REPLY + app notification ── */}
           {actionable && channel.type === 'app' && (
-            <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 space-y-3">
-              <p className="text-sm text-blue-800">
+            <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-4 py-3 space-y-3">
+              <p className="text-sm text-blue-300">
                 💬 Reply to this in <strong>{channel.app}</strong> — this is a notification, not a real email.
               </p>
               <div className="flex items-center gap-2">
@@ -467,7 +468,7 @@ function DetailModal({
                 </a>
                 <button
                   onClick={() => onRemove(email.id)}
-                  className="rounded-md border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100"
+                  className="rounded-md border border-blue-500/30 px-3 py-1.5 text-xs font-medium text-blue-400 transition-colors hover:bg-blue-500/15"
                 >
                   Mark as handled
                 </button>
@@ -479,10 +480,10 @@ function DetailModal({
         </div>
 
         {/* Drawer footer */}
-        <div className="flex shrink-0 justify-end border-t border-zinc-100 px-5 py-3">
+        <div className="flex shrink-0 justify-end border-t border-white/5 px-5 py-3">
           <button
             onClick={onClose}
-            className="rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50"
+            className="rounded-md border border-white/10 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-300"
           >
             Close
           </button>
