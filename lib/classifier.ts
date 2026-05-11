@@ -36,42 +36,52 @@ DECISION HEURISTICS (in order of priority):
 
 Return ONLY a valid JSON array. No prose, no markdown fences. Each object: { id, category, reasoning } where reasoning is under 15 words and explains WHY that category.`
 
+const BATCH_SIZE = 15
+
+async function classifyBatch(emails: EmailInput[]): Promise<Classification[]> {
+  const userMessage = JSON.stringify(
+    emails.map(({ id, subject, sender, snippet }) => ({ id, subject, sender, snippet }))
+  )
+
+  const attempt = async (): Promise<Classification[]> => {
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4096,
+      temperature: 0.3,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userMessage }],
+    })
+    const textBlock = response.content.find((b) => b.type === 'text')
+    const raw = textBlock?.type === 'text' ? textBlock.text : ''
+    return JSON.parse(raw) as Classification[]
+  }
+
+  try {
+    return await attempt()
+  } catch {
+    try {
+      return await attempt()
+    } catch (err) {
+      console.error('[classifier] Batch failed after retry:', err)
+      return emails.map((e) => ({
+        id: e.id,
+        category: 'FYI' as EmailCategory,
+        reasoning: 'classification failed',
+      }))
+    }
+  }
+}
+
 export async function classifyEmails(
   emails: EmailInput[]
 ): Promise<Classification[]> {
   if (emails.length === 0) return []
 
-  const userMessage = JSON.stringify(
-    emails.map(({ id, subject, sender, snippet }) => ({
-      id,
-      subject,
-      sender,
-      snippet,
-    }))
-  )
-
-  let response
-  try {
-    response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
-      temperature: 0.3,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userMessage }],
-    })
-  } catch (err) {
-    console.error('[classifier] Anthropic API error:', err)
-    throw err
+  const chunks: EmailInput[][] = []
+  for (let i = 0; i < emails.length; i += BATCH_SIZE) {
+    chunks.push(emails.slice(i, i + BATCH_SIZE))
   }
 
-  const textBlock = response.content.find((b) => b.type === 'text')
-  const raw = textBlock?.type === 'text' ? textBlock.text : ''
-
-  try {
-    const parsed = JSON.parse(raw) as Classification[]
-    return parsed
-  } catch (err) {
-    console.error('[classifier] Failed to parse response:', err, '\nRaw output:', raw)
-    return []
-  }
+  const results = await Promise.all(chunks.map(classifyBatch))
+  return results.flat()
 }

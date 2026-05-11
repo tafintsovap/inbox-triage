@@ -142,29 +142,42 @@ export async function fetchUnreadEmails(
       const detail = await gmail.users.messages.get({
         userId: 'me',
         id: msg.id,
-        format: 'full',
+        format: 'metadata',
+        metadataHeaders: ['Subject', 'From'],
       })
 
-      const payload = detail.data.payload
-      const headers = payload?.headers ?? []
-
+      const headers = detail.data.payload?.headers ?? []
       const subject = getHeader(headers, 'subject') || '(no subject)'
       const sender = getHeader(headers, 'from') || '(unknown sender)'
       const snippet = detail.data.snippet ?? ''
-      const body = payload
-        ? extractPlainTextBody(payload as Parameters<typeof extractPlainTextBody>[0]).slice(0, 2000)
-        : ''
 
       return {
         id: msg.id,
-        threadId: msg.threadId ?? '',
+        threadId: msg.threadId ?? detail.data.threadId ?? '',
         subject,
         sender,
         snippet,
-        body,
+        body: '',
       } satisfies EmailMessage
     })
   )
 
   return emails.filter((e): e is EmailMessage => e !== null)
+}
+
+export async function fetchEmailBody(userId: string, emailId: string): Promise<string> {
+  const gmail = await getGmailClient(userId)
+
+  const detail = await gmail.users.messages.get({
+    userId: 'me',
+    id: emailId,
+    format: 'full',
+  })
+
+  const payload = detail.data.payload
+  if (!payload) return ''
+
+  return extractPlainTextBody(
+    payload as Parameters<typeof extractPlainTextBody>[0]
+  ).slice(0, 2000)
 }

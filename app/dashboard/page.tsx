@@ -274,11 +274,21 @@ function DetailModal({
   const channel: ReplyChannel = detectReplyChannel({ sender: email.sender, subject: email.subject })
   const actionable = email.category === 'URGENT' || email.category === 'REPLY'
 
+  const [emailBody, setEmailBody] = useState(email.body)
   const [draftStatus, setDraftStatus] = useState<DraftStatus>('idle')
   const [draft, setDraft] = useState('')
   const [draftError, setDraftError] = useState<string | null>(null)
   const [sendError, setSendError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (!email.body) {
+      fetch(`/api/email-body?id=${email.id}`)
+        .then((r) => r.json())
+        .then((data) => { if (data.body) setEmailBody(data.body) })
+        .catch(() => {})
+    }
+  }, [email.id, email.body])
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
@@ -297,7 +307,7 @@ function DetailModal({
       const res = await fetch('/api/draft-reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ emailId: email.id, subject: email.subject, sender: email.sender, snippet: email.snippet, body: email.body }),
+        body: JSON.stringify({ emailId: email.id, subject: email.subject, sender: email.sender, snippet: email.snippet, body: emailBody }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Draft failed')
