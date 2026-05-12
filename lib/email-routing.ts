@@ -2,7 +2,7 @@ export type ReplyChannel =
   | { type: 'email' }
   | {
       type: 'app'
-      app: 'LinkedIn' | 'GitHub' | 'Slack' | 'X' | 'Instagram' | 'WhatsApp'
+      app: 'LinkedIn' | 'GitHub' | 'Slack' | 'X' | 'Instagram' | 'WhatsApp' | 'Telegram' | 'Discord' | 'OLX' | 'Stripe' | 'Booking' | 'Airbnb' | 'Uber' | 'Revolut'
       url: string
     }
 
@@ -36,6 +36,42 @@ export function detectReplyChannel(email: {
 
   if (domain.includes('instagram.com')) {
     return { type: 'app', app: 'Instagram', url: 'https://www.instagram.com/direct/' }
+  }
+
+  if (domain.includes('whatsapp.com')) {
+    return { type: 'app', app: 'WhatsApp', url: 'https://web.whatsapp.com/' }
+  }
+
+  if (domain.includes('telegram.org')) {
+    return { type: 'app', app: 'Telegram', url: 'https://web.telegram.org/' }
+  }
+
+  if (domain.includes('discord.com')) {
+    return { type: 'app', app: 'Discord', url: 'https://discord.com/app' }
+  }
+
+  if (domain.includes('olx.pt')) {
+    return { type: 'app', app: 'OLX', url: 'https://www.olx.pt/' }
+  }
+
+  if (domain.includes('stripe.com')) {
+    return { type: 'app', app: 'Stripe', url: 'https://dashboard.stripe.com/' }
+  }
+
+  if (domain.includes('booking.com')) {
+    return { type: 'app', app: 'Booking', url: 'https://account.booking.com/' }
+  }
+
+  if (domain.includes('airbnb.com')) {
+    return { type: 'app', app: 'Airbnb', url: 'https://www.airbnb.com/' }
+  }
+
+  if (domain.includes('uber.com')) {
+    return { type: 'app', app: 'Uber', url: 'https://riders.uber.com/' }
+  }
+
+  if (domain.includes('revolut.com')) {
+    return { type: 'app', app: 'Revolut', url: 'https://app.revolut.com/' }
   }
 
   return { type: 'email' }
