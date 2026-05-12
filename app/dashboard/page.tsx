@@ -274,6 +274,7 @@ function DetailModal({
 }) {
   const channel: ReplyChannel = detectReplyChannel({ sender: email.sender, subject: email.subject })
   const actionable = email.category === 'URGENT' || email.category === 'REPLY'
+  const routable   = email.category !== 'SPAM' && channel.type === 'app'
 
   const [emailBody, setEmailBody] = useState(email.body)
   const [draftStatus, setDraftStatus] = useState<DraftStatus>('idle')
@@ -451,8 +452,8 @@ function DetailModal({
             </div>
           )}
 
-          {/* ── Case B: URGENT/REPLY + app notification ── */}
-          {actionable && channel.type === 'app' && (
+          {/* ── Case B: platform app — any column except SPAM ── */}
+          {routable && (
             <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-4 py-3 space-y-3">
               <p className="text-sm text-blue-300">
                 💬 Reply to this in <strong>{channel.app}</strong> — this is a notification, not a real email.
@@ -476,7 +477,7 @@ function DetailModal({
             </div>
           )}
 
-          {/* Case C: FYI/SPAM — no actions, just details above */}
+          {/* Case C: SPAM in any column, or FYI from a regular (non-platform) sender — no actions */}
         </div>
 
         {/* Drawer footer */}
