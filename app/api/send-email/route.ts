@@ -1,7 +1,7 @@
 import { getGmailClient } from '@/lib/gmail'
 import { createClient } from '@/lib/supabase/server'
 
-function buildRawMessage({
+export function buildRawMessage({
   from,
   to,
   subject,

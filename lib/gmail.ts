@@ -76,12 +76,12 @@ export async function getGmailClient(
   return google.gmail({ version: 'v1', auth })
 }
 
-function decodeBase64(encoded: string): string {
+export function decodeBase64(encoded: string): string {
   const normalized = encoded.replace(/-/g, '+').replace(/_/g, '/')
   return Buffer.from(normalized, 'base64').toString('utf-8')
 }
 
-function extractPlainTextBody(payload: {
+export function extractPlainTextBody(payload: {
   mimeType?: string | null
   body?: { data?: string | null } | null
   parts?: Array<{
