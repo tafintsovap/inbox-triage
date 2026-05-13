@@ -38,12 +38,20 @@ Return ONLY a valid JSON array. No prose, no markdown fences. Each object: { id,
 
 const BATCH_SIZE = 15
 
+export function stripMarkdownFences(s: string): string {
+  return s
+    .trim()
+    .replace(/^```(?:json)?\n?/, '')
+    .replace(/\n?```$/, '')
+    .trim()
+}
+
 async function classifyBatch(emails: EmailInput[], temperature: number = 0.3): Promise<Classification[]> {
   const userMessage = JSON.stringify(
     emails.map(({ id, subject, sender, snippet }) => ({ id, subject, sender, snippet }))
   )
 
-  const attempt = async (): Promise<Classification[]> => {
+  const attempt = async (temp: number = temperature): Promise<Classification[]> => {
     console.log(JSON.stringify({
       tag: '[classifier]', event: 'batch_start',
       batch_size: emails.length,
@@ -55,13 +63,13 @@ async function classifyBatch(emails: EmailInput[], temperature: number = 0.3): P
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
-      temperature,
+      temperature: temp,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],
     })
     const textBlock = response.content.find((b) => b.type === 'text')
     const raw = textBlock?.type === 'text' ? textBlock.text : ''
-    const parsed = JSON.parse(raw) as Classification[]
+    const parsed = JSON.parse(stripMarkdownFences(raw)) as Classification[]
     console.log(JSON.stringify({
       tag: '[classifier]', event: 'batch_result',
       results: parsed.map(({ id, category, reasoning }) => ({ id, category, reasoning })),
@@ -74,7 +82,7 @@ async function classifyBatch(emails: EmailInput[], temperature: number = 0.3): P
   } catch (retryErr) {
     console.log(JSON.stringify({ tag: '[classifier]', event: 'batch_retry', error: String(retryErr) }))
     try {
-      return await attempt()
+      return await attempt(Math.min(temperature + 0.1, 1.0))
     } catch (err) {
       console.log(JSON.stringify({ tag: '[classifier]', event: 'batch_failed', error: String(err) }))
       console.error('[classifier] Batch failed after retry:', err)

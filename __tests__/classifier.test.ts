@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { classifyEmails, type EmailInput } from '@/lib/classifier'
+import { classifyEmails, stripMarkdownFences, type EmailInput } from '@/lib/classifier'
 
 const fixtures: Array<{ description: string; email: EmailInput; expected: string }> = [
   {
@@ -71,4 +71,32 @@ describe('classifier', () => {
       expect(result.category).toBe(expected)
     })
   }
+})
+
+describe('stripMarkdownFences', () => {
+  it('strips ```json\\n...\\n``` fences', () => {
+    const input = '```json\n[{"id":"a","category":"REPLY","reasoning":"test"}]\n```'
+    expect(JSON.parse(stripMarkdownFences(input))).toEqual([
+      { id: 'a', category: 'REPLY', reasoning: 'test' },
+    ])
+  })
+
+  it('strips ```\\n...\\n``` fences (no json tag)', () => {
+    const input = '```\n[{"id":"b","category":"FYI","reasoning":"auto"}]\n```'
+    expect(JSON.parse(stripMarkdownFences(input))).toEqual([
+      { id: 'b', category: 'FYI', reasoning: 'auto' },
+    ])
+  })
+
+  it('strips ```json...``` fences (no newlines)', () => {
+    const input = '```json[{"id":"c","category":"SPAM","reasoning":"mass email"}]```'
+    expect(JSON.parse(stripMarkdownFences(input))).toEqual([
+      { id: 'c', category: 'SPAM', reasoning: 'mass email' },
+    ])
+  })
+
+  it('passes through clean JSON unchanged', () => {
+    const input = '[{"id":"d","category":"URGENT","reasoning":"deadline today"}]'
+    expect(stripMarkdownFences(input)).toBe(input)
+  })
 })
