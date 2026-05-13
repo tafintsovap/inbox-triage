@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { google } from 'googleapis'
+import { decode } from 'html-entities'
 
 export interface EmailMessage {
   id: string
@@ -90,19 +91,19 @@ function extractPlainTextBody(payload: {
   }> | null
 }): string {
   if (payload.mimeType === 'text/plain' && payload.body?.data) {
-    return decodeBase64(payload.body.data)
+    return decode(decodeBase64(payload.body.data))
   }
 
   if (payload.parts) {
     for (const part of payload.parts) {
       if (part.mimeType === 'text/plain' && part.body?.data) {
-        return decodeBase64(part.body.data)
+        return decode(decodeBase64(part.body.data))
       }
     }
     // Fall back to first part that has data if no plain text found
     for (const part of payload.parts) {
       if (part.body?.data) {
-        return decodeBase64(part.body.data)
+        return decode(decodeBase64(part.body.data))
       }
     }
   }
@@ -147,9 +148,9 @@ export async function fetchUnreadEmails(
       })
 
       const headers = detail.data.payload?.headers ?? []
-      const subject = getHeader(headers, 'subject') || '(no subject)'
+      const subject = decode(getHeader(headers, 'subject') || '(no subject)')
       const sender = getHeader(headers, 'from') || '(unknown sender)'
-      const snippet = detail.data.snippet ?? ''
+      const snippet = decode(detail.data.snippet ?? '')
 
       return {
         id: msg.id,
